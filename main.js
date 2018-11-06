@@ -1,22 +1,23 @@
-const electron = require('electron')
+//const electron = require('electron')
+const {app, BrowserWindow, ipcMain} = require('electron')
 const {download} = require('electron-dl')
 const path = require('path')
 
 // Module to control application life.
-const app = electron.app
+//const app = electron.app
 
-// // Module to create native browser window.
-const BrowserWindow = electron.BrowserWindow
+// Module to create native browser window.
+//const BrowserWindow = electron.BrowserWindow
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
+let mainMenu
 
 function createWindow () {
-  console.log("Create Window fired")
 
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 800, height: 600, webPreferences: {
+  mainWindow = new BrowserWindow({width: 1280, height: 600, webPreferences: {
       nodeIntegration: false,
       preload: path.join(__dirname, 'preload.js')
     }
@@ -27,14 +28,13 @@ function createWindow () {
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
-    console.log("closed fired");
 
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     mainWindow = null
   })
-
+  
   // and load the index.html of the app.
   mainWindow.loadURL(`file://${__dirname}/index.html`)
 }
@@ -63,20 +63,40 @@ app.on('activate', function () {
   }
 })
 
-var startDate
+var info = {}
 
-electron.ipcMain.on('download', (event, url) => {
-  startDate = new Date().toLocaleString()
-  console.log("download start("+ startDate + "): " + url)
-  mainWindow.webContents.send('start', startDate)
+ipcMain.on('download', (event, url) => {
+  info.startDate = new Date()
+  info.url = url
+  console.log("download start: " + JSON.stringify(info))
+  mainWindow.webContents.send('update', info)
 
-  download(mainWindow, url, {
+  download(mainWindow, info.url, {
+    onStarted: (dl) => {
+      info.size = dl.getTotalBytes();
+      info.startDate = new Date()
+      mainWindow.webContents.send('update', info)
+    },
     onProgress: (progress) => { 
-      const percent = Math.floor( progress *100)
+      info.percent = progress 
+      info.elapsedSeconds = Math.floor((new Date().getTime() - info.startDate.getTime()) / 1000);
+      info.elapsedBytes = Math.floor(info.size * info.percent);
+
+      if (info.elapsedSeconds > 0) {
+        info.bytesPerSecond = Math.floor(info.elapsedBytes / info.elapsedSeconds);
+      }
+
       if (mainWindow && mainWindow.webContents) 
-        mainWindow.webContents.send('update', percent)
+        mainWindow.webContents.send('update', info)
+
+      console.log("download update: " + JSON.stringify(info))
     }
   })
-    .then(dl => mainWindow.webContents.send('done', new Date().toLocaleString()) )
+    .then(dl => {
+      info.doneDate = new Date()
+      console.log("download done: " + JSON.stringify(info))
+      if (mainWindow && mainWindow.webContents) 
+        mainWindow.webContents.send('update', info)
+    })
     .catch(console.error);
 })

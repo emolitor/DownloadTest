@@ -8,13 +8,15 @@
   "scripts": {
     "start": "electron .",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "clean": "rimraf dist"
   },
   "dependencies": {
     "electron-dl": "1.12.0"
   },
   "devDependencies": {
     "electron": "^3.0.0",
-    "electron-builder": "^20.31.2"
+    "electron-builder": "^20.31.2",
+    "rimraf": "^2.6.2"
   }
 }

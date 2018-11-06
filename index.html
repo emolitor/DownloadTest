@@ -5,9 +5,15 @@
     <title>Download Test</title>
   </head>
   <body>
-    <h1>Download Test<h1>
+    <b>Download Test</b><br />
+    This is a simple electron app that downloads a URL and reports on the progress.
+
+    <p />
+
     <div id="control">
-      <input type="button" value="Start Test" onclick="download('https://download.fedoraproject.org/pub/fedora/linux/releases/29/Workstation/x86_64/iso/Fedora-Workstation-Live-x86_64-29-1.2.iso');" />
+      <input name="url" type="text" size="176" id="url" value="https://download.fedoraproject.org/pub/fedora/linux/releases/29/Workstation/x86_64/iso/Fedora-Workstation-Live-x86_64-29-1.2.iso" />
+      <br />
+      <input type="button" value="Start Test" onclick="download(document.getElementById('url').value);" />
     </div>
     <div id="status"/><br />
   </body>
