@@ -3,12 +3,6 @@ const {app, BrowserWindow, ipcMain} = require('electron')
 const {download} = require('electron-dl')
 const path = require('path')
 
-// Module to control application life.
-//const app = electron.app
-
-// Module to create native browser window.
-//const BrowserWindow = electron.BrowserWindow
-
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
@@ -68,7 +62,7 @@ var info = {}
 ipcMain.on('download', (event, url) => {
   info.startDate = new Date()
   info.url = url
-  console.log("download start: " + JSON.stringify(info))
+  //console.log("download start: " + JSON.stringify(info))
   mainWindow.webContents.send('update', info)
 
   download(mainWindow, info.url, {
@@ -89,12 +83,12 @@ ipcMain.on('download', (event, url) => {
       if (mainWindow && mainWindow.webContents) 
         mainWindow.webContents.send('update', info)
 
-      console.log("download update: " + JSON.stringify(info))
+      //console.log("download update: " + JSON.stringify(info))
     }
   })
     .then(dl => {
       info.doneDate = new Date()
-      console.log("download done: " + JSON.stringify(info))
+      //console.log("download done: " + JSON.stringify(info))
       if (mainWindow && mainWindow.webContents) 
         mainWindow.webContents.send('update', info)
     })

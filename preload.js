@@ -35,12 +35,6 @@ global.updateUX = (u) => {
   statusContents = statusContents + "</pre>";
 
   document.getElementById("status").innerHTML = statusContents
-  //statusUX.innerHTML = "<pre>" + 
-//		'Start          :' + startDate + '\n' +
-//		'Percent        :' + percentage + '&percnt;\n' +
-//		'Elapsed Seconds:' + elapsedSeconds + '\n' +
-//		'Done           :' + doneDate + '\n' +
-//		"</pre>"
 }
 
 ipcRenderer.on('update', (event, u)=>{
