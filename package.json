@@ -1,7 +1,9 @@
 {
   "name": "download-test",
+  "description": "Simple electron appliction that tests a download URL.",
   "version": "0.1.2",
   "main": "main.js",
+  "author": "eric@molitor.org",
   "build": {
     "appId": "download.test"
   },
