@@ -1,21 +1,21 @@
 //const electron = require('electron')
-const {app, BrowserWindow, ipcMain} = require('electron')
-const {download} = require('electron-dl')
-const path = require('path')
+const {app, BrowserWindow, ipcMain} = require('electron');
+const {download} = require('electron-dl');
+const path = require('path');
+const request = require('request');
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let mainWindow
-let mainMenu
+let mainWindow;
 
 function createWindow () {
 
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 1280, height: 600, webPreferences: {
+  mainWindow = new BrowserWindow({width: 1280, height: 800, webPreferences: {
       nodeIntegration: false,
       preload: path.join(__dirname, 'preload.js')
     }
-  })
+  });
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()
@@ -27,10 +27,10 @@ function createWindow () {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     mainWindow = null
-  })
+  });
   
   // and load the index.html of the app.
-  mainWindow.loadURL(`file://${__dirname}/index.html`)
+  mainWindow.loadFile('index.html')
 }
 
 // This method will be called when Electron has finished
@@ -38,7 +38,7 @@ function createWindow () {
 // Some APIs can only be used after this event occurs.
 app.on('ready', ()=> {
   createWindow();
-})
+});
 
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {
@@ -47,7 +47,7 @@ app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') {
   app.quit()
   }
-})
+});
 
 app.on('activate', function () {
   // On OS X it's common to re-create a window in the app when the
@@ -55,24 +55,35 @@ app.on('activate', function () {
   if (mainWindow === null) {
     createWindow()
   }
-})
+});
 
-var info = {}
+let info = {};
 
 ipcMain.on('download', (event, url) => {
-  info.startDate = new Date()
-  info.url = url
+  info.startDate = new Date();
+  info.url = url;
+
+  request.head(url).on('response', function(response) {
+      info.statusCode = response.statusCode;
+      info.headers = "";
+
+      let headers = response.headers;
+      for (const k in headers){
+        info.headers = info.headers + `${k}=${headers[k]}\n`;
+        //console.log(`${k}=${headers[k]}`);
+      }
+  });
   //console.log("download start: " + JSON.stringify(info))
-  mainWindow.webContents.send('update', info)
+  mainWindow.webContents.send('update', info);
 
   download(mainWindow, info.url, {
     onStarted: (dl) => {
       info.size = dl.getTotalBytes();
-      info.startDate = new Date()
-      mainWindow.webContents.send('update', info)
+      info.startDate = new Date();
+      mainWindow.webContents.send('update', info);
     },
     onProgress: (progress) => { 
-      info.percent = progress 
+      info.percent = progress;
       info.elapsedSeconds = Math.floor((new Date().getTime() - info.startDate.getTime()) / 1000);
       info.elapsedBytes = Math.floor(info.size * info.percent);
 
@@ -81,16 +92,16 @@ ipcMain.on('download', (event, url) => {
       }
 
       if (mainWindow && mainWindow.webContents) 
-        mainWindow.webContents.send('update', info)
+        mainWindow.webContents.send('update', info);
 
       //console.log("download update: " + JSON.stringify(info))
     }
   })
     .then(dl => {
-      info.doneDate = new Date()
+      info.doneDate = new Date();
       //console.log("download done: " + JSON.stringify(info))
       if (mainWindow && mainWindow.webContents) 
-        mainWindow.webContents.send('update', info)
+        mainWindow.webContents.send('update', info);
     })
     .catch(console.error);
-})
+});
