@@ -1,6 +1,6 @@
 const { ipcRenderer } = require('electron');
 
-global.download= (url) => {
+global.download = (url) => {
   let control = document.getElementById("control");
   control.style.display = "none";
 
@@ -8,12 +8,20 @@ global.download= (url) => {
   ipcRenderer.send('download', url);
 };
 
-global.downloadMulti= (url) => {
+global.downloadMulti = (url) => {
     let control = document.getElementById("control");
     control.style.display = "none";
 
     console.log("download Multi: " + url);
     ipcRenderer.send('multidownload', url);
+};
+
+global.downloadCurl = (url) => {
+  let control = document.getElementById("control");
+  control.style.display = "none";
+
+  console.log("download Curl: " + url);
+  ipcRenderer.send('curlDownload', url);
 };
 
 global.updateUX = (u) => {

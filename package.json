@@ -1,11 +1,14 @@
 {
   "name": "downloadtest",
   "description": "Simple electron appliction that tests a download URL.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "main": "main.js",
   "author": "eric@molitor.org",
   "build": {
-    "appId": "download.test"
+    "appId": "download.test",
+    "extraFiles": [
+      "cacert.pem"
+    ]
   },
   "scripts": {
     "start": "electron .",
@@ -16,11 +19,12 @@
   "dependencies": {
     "electron-dl": "1.12.0",
     "multipart-download": "1.1.0",
+    "node-libcurl": "^1.3.3",
     "request": "^2.88.0"
   },
   "devDependencies": {
     "ajv": "^6.5.5",
-    "electron": "^3.0.0",
+    "electron": "3.0.8",
     "electron-builder": "^20.31.2",
     "rimraf": "^2.6.2"
   }

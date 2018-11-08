@@ -3,8 +3,11 @@ const {app, BrowserWindow, ipcMain} = require('electron');
 const {download} = require('electron-dl');
 const path = require('path');
 const request = require('request');
+
 const MultipartDownload = require('multipart-download');
 const os = require('os');
+
+var Curl = require('node-libcurl').Curl;
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -61,6 +64,88 @@ app.on('activate', function () {
 
 let info = {};
 
+ipcMain.on('curlDownload', (event, url) => {
+  info.startDate = new Date();
+  info.url = url;
+  info.elapsedBytes = 0;
+  info.headers = "";
+
+  const curl = new Curl();
+  curl.setOpt('URL', url);
+
+  curl.setOpt('FOLLOWLOCATION', 1);
+  curl.setOpt('VERBOSE', 1);
+
+  curl.setOpt(Curl.option.CAINFO, "cacert.pem");
+  curl.setOpt('SSL_VERIFYHOST', 2); //This is not a boolean field! 0 -> Disabled, 2 -> Enabled
+  curl.setOpt('SSL_VERIFYPEER', 1);
+  //curl.setOpt('SSL_VERIFYHOST', 0);
+  //curl.setOpt('SSL_VERIFYPEER', 0);
+
+  curl.setOpt(Curl.option.NOPROGRESS, false);
+
+  //Since we are downloading a large file, disable internal storage
+  // used for automatic http data/headers parsing.
+  //Because of that, the end event will receive null for both data/header arguments.
+  curl.enable(Curl.feature.NO_STORAGE);
+
+  // The option XFERINFOFUNCTION was introduced in curl version 7.32.0,
+  // versions older than that should use PROGRESSFUNCTION.
+  // if you don't want to mess with version numbers,
+  // there is the following helper method to set the progress cb.
+  curl.setProgressCallback(function(dltotal, dlnow /*, ultotal, ulnow*/) {
+    if(dltotal === 0)
+      return 0;
+
+    info.elapsedSeconds = Math.floor((new Date().getTime() - info.startDate.getTime()) / 1000);
+
+    info.size = dltotal;
+    info.elapsedBytes = dlnow;
+
+    if (info.elapsedSeconds > 0) {
+      info.bytesPerSecond = Math.floor(info.elapsedBytes / info.elapsedSeconds);
+    }
+
+    mainWindow.webContents.send('update', info);
+
+    //console.log("dltotal:" + dltotal);
+    //console.log("dlnow:" + dlnow);
+    return 0;
+  });
+
+  // This is the same than the data event, however,
+// keep in mind that here the return value is considered.
+  curl.setOpt(Curl.option.WRITEFUNCTION, function(chunk) {
+    //fs.appendFileSync(outputFile, chunk);
+
+    //console.log("write:" + chunk.length);
+    mainWindow.webContents.send('update', info);
+
+    return chunk.length;
+  });
+
+  curl.on('header', function(chunk) {
+    var textChunk = chunk.toString('utf8');
+    info.headers = info.headers + textChunk;
+    mainWindow.webContents.send('update', info);
+  });
+
+  curl.on('end', function() {
+    info.doneDate = new Date();
+    mainWindow.webContents.send('update', info);
+
+    console.log('Download ended');
+    curl.close();
+  });
+
+  curl.on('error', function(err) {
+    console.log('Failed to download file', err);
+    curl.close();
+  });
+
+  curl.perform();
+});
+
 ipcMain.on('multidownload', (event, url) => {
     info.startDate = new Date();
     info.url = url;
@@ -113,13 +198,13 @@ ipcMain.on('download', (event, url) => {
   info.url = url;
 
   request.head(url).on('response', function(response) {
-      info.statusCode = response.statusCode;
-      info.headers = "";
+    info.statusCode = response.statusCode;
+    info.headers = "";
 
-      let headers = response.headers;
-      for (const k in headers){
-        info.headers = info.headers + `${k}=${headers[k]}\n`;
-      }
+    let headers = response.headers;
+    for (const k in headers){
+      info.headers = info.headers + `${k}=${headers[k]}\n`;
+    }
   });
 
   mainWindow.webContents.send('update', info);
