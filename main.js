@@ -80,8 +80,6 @@ ipcMain.on('multidownload', (event, url) => {
 
     mainWindow.webContents.send('update', info);
 
-
-
     new MultipartDownload()
         .start(url, {
             numOfConnections: 5,
@@ -100,8 +98,7 @@ ipcMain.on('multidownload', (event, url) => {
             if (info.elapsedSeconds > 0) {
                 info.bytesPerSecond = Math.floor(info.elapsedBytes / info.elapsedSeconds);
             }
-            console.log("Data Length:" + data.length);
-            console.log("Offset: " + offset);
+
             mainWindow.webContents.send('update', info);
         })
         .on('end', (output) => {
