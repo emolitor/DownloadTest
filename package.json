@@ -1,5 +1,5 @@
 {
-  "name": "download-test",
+  "name": "DownloadTest",
   "description": "Simple electron appliction that tests a download URL.",
   "version": "0.1.2",
   "main": "main.js",
