@@ -1,7 +1,7 @@
 {
-  "name": "DownloadTest",
+  "name": "downloadtest",
   "description": "Simple electron appliction that tests a download URL.",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "main": "main.js",
   "author": "eric@molitor.org",
   "build": {
@@ -15,9 +15,11 @@
   },
   "dependencies": {
     "electron-dl": "1.12.0",
+    "multipart-download": "1.1.0",
     "request": "^2.88.0"
   },
   "devDependencies": {
+    "ajv": "^6.5.5",
     "electron": "^3.0.0",
     "electron-builder": "^20.31.2",
     "rimraf": "^2.6.2"

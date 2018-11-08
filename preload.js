@@ -8,6 +8,14 @@ global.download= (url) => {
   ipcRenderer.send('download', url);
 };
 
+global.downloadMulti= (url) => {
+    let control = document.getElementById("control");
+    control.style.display = "none";
+
+    console.log("download Multi: " + url);
+    ipcRenderer.send('multidownload', url);
+};
+
 global.updateUX = (u) => {
   let statusContents = "";
   //let statusContents = "<pre>";
