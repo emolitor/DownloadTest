@@ -76,7 +76,9 @@ ipcMain.on('curlDownload', (event, url) => {
   curl.setOpt('FOLLOWLOCATION', 1);
   curl.setOpt('VERBOSE', 1);
 
-  curl.setOpt(Curl.option.CAINFO, "cacert.pem");
+  console.log("AppPath:" + app.getAppPath());
+
+  curl.setOpt(Curl.option.CAINFO,  app.getAppPath() + path.sep  + "cacert.pem");
   curl.setOpt('SSL_VERIFYHOST', 2); //This is not a boolean field! 0 -> Disabled, 2 -> Enabled
   curl.setOpt('SSL_VERIFYPEER', 1);
   //curl.setOpt('SSL_VERIFYHOST', 0);
