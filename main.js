@@ -6,6 +6,7 @@ const request = require('request');
 
 const MultipartDownload = require('multipart-download');
 const os = require('os');
+const fs = require('fs');
 
 var Curl = require('node-libcurl').Curl;
 
@@ -76,9 +77,18 @@ ipcMain.on('curlDownload', (event, url) => {
   curl.setOpt('FOLLOWLOCATION', 1);
   curl.setOpt('VERBOSE', 1);
 
-  console.log("AppPath:" + app.getAppPath());
+  if (fs.existsSync( "cacert.pem")) {
+    curl.setOpt(Curl.option.CAINFO, "cacert.pem");
+  }
 
-  curl.setOpt(Curl.option.CAINFO,  app.getAppPath() + path.sep  + "cacert.pem");
+  if (fs.existsSync( app.getAppPath() + path.sep  + "cacert.pem")) {
+    curl.setOpt(Curl.option.CAINFO, app.getAppPath() + path.sep  + "cacert.pem");
+  }
+
+  if (fs.existsSync( process.resourcesPath + path.sep  + "cacert.pem")) {
+    curl.setOpt(Curl.option.CAINFO, process.resourcesPath + path.sep  + "cacert.pem");
+  }
+
   curl.setOpt('SSL_VERIFYHOST', 2); //This is not a boolean field! 0 -> Disabled, 2 -> Enabled
   curl.setOpt('SSL_VERIFYPEER', 1);
   //curl.setOpt('SSL_VERIFYHOST', 0);

@@ -6,7 +6,7 @@
   "author": "eric@molitor.org",
   "build": {
     "appId": "download.test",
-    "extraFiles": [
+    "extraResources": [
       "cacert.pem"
     ]
   },
