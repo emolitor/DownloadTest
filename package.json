@@ -1,6 +1,6 @@
 {
   "name": "download-test",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "main": "main.js",
   "build": {
     "appId": "download.test"
