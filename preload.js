@@ -24,6 +24,14 @@ global.downloadCurl = (url) => {
   ipcRenderer.send('curlDownload', url);
 };
 
+global.downloadElectron = (url) => {
+  let control = document.getElementById("control");
+  control.style.display = "none";
+
+  console.log("download Electron: " + url);
+  ipcRenderer.send('electronDownload', url);
+};
+
 global.updateUX = (u) => {
   let statusContents = "";
   //let statusContents = "<pre>";

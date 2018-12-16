@@ -1,5 +1,5 @@
 //const electron = require('electron')
-const {app, BrowserWindow, ipcMain} = require('electron');
+const {app, BrowserWindow, ipcMain, net} = require('electron');
 const {download} = require('electron-dl');
 const path = require('path');
 const request = require('request');
@@ -146,12 +146,12 @@ ipcMain.on('curlDownload', (event, url) => {
     info.doneDate = new Date();
     mainWindow.webContents.send('update', info);
 
-    console.log('Download ended');
+    //console.log('Download ended');
     curl.close();
   });
 
   curl.on('error', function(err) {
-    console.log('Failed to download file', err);
+    //console.log('Failed to download file', err);
     curl.close();
   });
 
@@ -183,7 +183,7 @@ ipcMain.on('multidownload', (event, url) => {
             saveDirectory: os.homedir() + "/Downloads",
         })
         .on('error', (err) => {
-            console.log(JSON.stringify(err));
+            //console.log(JSON.stringify(err));
         })
         .on('data', (data, offset) => {
             info.elapsedBytes = info.elapsedBytes + data.length;
@@ -199,7 +199,7 @@ ipcMain.on('multidownload', (event, url) => {
             mainWindow.webContents.send('update', info);
         })
         .on('end', (output) => {
-            console.log(`Downloaded file path: ${output}`);
+            //console.log(`Downloaded file path: ${output}`);
             info.doneDate = new Date();
             mainWindow.webContents.send('update', info);
         });
@@ -248,4 +248,51 @@ ipcMain.on('download', (event, url) => {
         mainWindow.webContents.send('update', info);
     })
     .catch(console.error);
+});
+
+ipcMain.on('electronDownload', (event, url) => {
+    info.startDate = new Date();
+    info.url = url;
+    info.elapsedBytes = 0;
+    mainWindow.webContents.send('update', info);
+
+    const request = net.request(url)
+    request.on('response', (response) => {
+        //console.log(`STATUS: ${response.statusCode}`)
+        //console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
+        info.statusCode = response.statusCode;
+
+        info.headers = "";
+
+        let headers = response.headers;
+        for (const k in headers){
+            if (k === "content-length")
+                info.size = headers[k];
+            info.headers = info.headers + `${k}=${headers[k]}\n`;
+        }
+
+        mainWindow.webContents.send('update', info);
+
+        response.on('data', (chunk) => {
+            info.elapsedBytes = info.elapsedBytes + chunk.length;
+            info.elapsedSeconds = Math.floor((new Date().getTime() - info.startDate.getTime()) / 1000);
+
+            if (info.size)
+                info.percent = info.elapsedBytes / info.size;
+
+            if (info.elapsedSeconds > 0) {
+                info.bytesPerSecond = Math.floor(info.elapsedBytes / info.elapsedSeconds);
+            }
+
+            mainWindow.webContents.send('update', info);
+
+            //console.log(`BODY: ${chunk.length}`)
+        })
+        response.on('end', () => {
+            //console.log('No more data in response.')
+            info.doneDate = new Date();
+            mainWindow.webContents.send('update', info);
+        })
+    })
+    request.end()
 });
