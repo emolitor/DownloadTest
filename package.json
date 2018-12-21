@@ -1,7 +1,7 @@
 {
   "name": "downloadtest",
   "description": "Simple electron application that tests a download URL.",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "main": "main.js",
   "author": "eric@molitor.org",
   "license": "UNLICENSED",
