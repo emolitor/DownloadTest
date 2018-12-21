@@ -2,24 +2,21 @@ const { remote } = require('electron');
 const mainProcess = remote.require('./main.js');
 
 global.download = (url) => {
-  let control = document.getElementById("control");
-  control.style.display = "none";
+  document.getElementById("control").style.display = "none";
 
   console.log("download: " + url);
   mainProcess.download(url);
 };
 
 global.downloadCurl = (url) => {
-  let control = document.getElementById("control");
-  control.style.display = "none";
+  document.getElementById("control").style.display = "none";
 
   console.log("download Curl: " + url);
   mainProcess.curlDownload(url);
 };
 
 global.downloadElectron = (url) => {
-  let control = document.getElementById("control");
-  control.style.display = "none";
+  document.getElementById("control").style.display = "none";
 
   console.log("download Electron: " + url);
   mainProcess.electronDownload(url);
