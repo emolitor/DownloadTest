@@ -4,7 +4,6 @@ const {download} = require('electron-dl');
 const path = require('path');
 const request = require('request');
 
-const MultipartDownload = require('multipart-download');
 const os = require('os');
 const fs = require('fs');
 
@@ -156,53 +155,6 @@ ipcMain.on('curlDownload', (event, url) => {
   });
 
   curl.perform();
-});
-
-ipcMain.on('multidownload', (event, url) => {
-    info.startDate = new Date();
-    info.url = url;
-    info.elapsedBytes = 0;
-
-    request.head(url).on('response', function(response) {
-        info.statusCode = response.statusCode;
-        info.headers = "";
-
-        let headers = response.headers;
-        for (const k in headers){
-            if (k === "content-length")
-              info.size = headers[k];
-            info.headers = info.headers + `${k}=${headers[k]}\n`;
-        }
-    });
-
-    mainWindow.webContents.send('update', info);
-
-    new MultipartDownload()
-        .start(url, {
-            numOfConnections: 5,
-            saveDirectory: os.homedir() + "/Downloads",
-        })
-        .on('error', (err) => {
-            //console.log(JSON.stringify(err));
-        })
-        .on('data', (data, offset) => {
-            info.elapsedBytes = info.elapsedBytes + data.length;
-            info.elapsedSeconds = Math.floor((new Date().getTime() - info.startDate.getTime()) / 1000);
-
-            if (info.size)
-                info.percent = info.elapsedBytes / info.size;
-
-            if (info.elapsedSeconds > 0) {
-                info.bytesPerSecond = Math.floor(info.elapsedBytes / info.elapsedSeconds);
-            }
-
-            mainWindow.webContents.send('update', info);
-        })
-        .on('end', (output) => {
-            //console.log(`Downloaded file path: ${output}`);
-            info.doneDate = new Date();
-            mainWindow.webContents.send('update', info);
-        });
 });
 
 ipcMain.on('download', (event, url) => {
