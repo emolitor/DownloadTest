@@ -40,6 +40,8 @@ function createWindow () {
 // Some APIs can only be used after this event occurs.
 app.on('ready', ()=> {
   createWindow();
+  log.transports.file.level = "debug";
+  autoUpdater.logger = log;
   autoUpdater.checkForUpdatesAndNotify();
 });
 
