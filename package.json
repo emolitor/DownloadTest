@@ -10,16 +10,23 @@
     "appId": "download.test",
     "extraResources": [
       "cacert.pem"
-    ]
+    ],
+    "publish": {
+      "provider": "github",
+      "bucket": "bucket-name"
+    }
   },
   "scripts": {
     "start": "electron .",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "release": "electron-builder --publish always"
   },
   "dependencies": {
     "electron-dl": "1.12.0",
+    "electron-log": "2.2.17",
+    "electron-updater": "4.0.6",
     "node-libcurl": "1.3.3",
     "request": "2.88.0"
   },

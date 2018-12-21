@@ -1,19 +1,12 @@
-const { ipcRenderer } = require('electron');
+const { remote } = require('electron');
+const mainProcess = remote.require('./main.js');
 
 global.download = (url) => {
   let control = document.getElementById("control");
   control.style.display = "none";
 
   console.log("download: " + url);
-  ipcRenderer.send('download', url);
-};
-
-global.downloadMulti = (url) => {
-    let control = document.getElementById("control");
-    control.style.display = "none";
-
-    console.log("download Multi: " + url);
-    ipcRenderer.send('multidownload', url);
+  mainProcess.download(url);
 };
 
 global.downloadCurl = (url) => {
@@ -21,7 +14,7 @@ global.downloadCurl = (url) => {
   control.style.display = "none";
 
   console.log("download Curl: " + url);
-  ipcRenderer.send('curlDownload', url);
+  mainProcess.curlDownload(url);
 };
 
 global.downloadElectron = (url) => {
@@ -29,12 +22,12 @@ global.downloadElectron = (url) => {
   control.style.display = "none";
 
   console.log("download Electron: " + url);
-  ipcRenderer.send('electronDownload', url);
+  mainProcess.electronDownload(url);
 };
 
 global.updateUX = (u) => {
   let statusContents = "";
-  //let statusContents = "<pre>";
+
   if (u.url)
     statusContents = statusContents + "URL: " + u.url + "<br />";
   if (u.size)
@@ -51,7 +44,6 @@ global.updateUX = (u) => {
     statusContents = statusContents + "elapsedSeconds: " + u.elapsedSeconds + "<br />";
   if (u.elapsedBytes) {
     statusContents = statusContents + "elapsedSize: (" + u.elapsedBytes + ") ";
-    //statusContents = statusContents + "elapsedKB: " + (u.elapsedBytes / 1024).toFixed(2) + "\n";
     statusContents = statusContents + (u.elapsedBytes / 1024 / 1024).toFixed(2) + "MB ";
     statusContents = statusContents + (u.elapsedBytes / 1024 / 1024 / 1024).toFixed(2) + "GB<br />";
   }
@@ -61,12 +53,13 @@ global.updateUX = (u) => {
   }
   if (u.doneDate)
     statusContents = statusContents + "done: " + u.doneDate.toLocaleString() + "<br />";
-  //statusContents = statusContents + "</pre>";
 
   document.getElementById("status").innerHTML = statusContents
 };
 
-ipcRenderer.on('update', (event, u)=>{
-  console.log("update: " + JSON.stringify(u));
-  updateUX(u)
-});
+setInterval(function() {
+  var info = mainProcess.getInfo();
+  console.log(info);
+  updateUX(info)
+}, 500);
+

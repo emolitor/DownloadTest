@@ -1,11 +1,11 @@
-//const electron = require('electron')
-const {app, BrowserWindow, ipcMain, net} = require('electron');
-const {download} = require('electron-dl');
+
+const { app, BrowserWindow, net } = require('electron');
+const { download } = require('electron-dl');
 const path = require('path');
 const request = require('request');
-
-const os = require('os');
+const { autoUpdater } = require("electron-updater");
 const fs = require('fs');
+const log = require("electron-log");
 
 var Curl = require('node-libcurl').Curl;
 
@@ -21,9 +21,6 @@ function createWindow () {
       preload: path.join(__dirname, 'preload.js')
     }
   });
-
-  // Open the DevTools.
-  // mainWindow.webContents.openDevTools()
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
@@ -43,6 +40,7 @@ function createWindow () {
 // Some APIs can only be used after this event occurs.
 app.on('ready', ()=> {
   createWindow();
+  autoUpdater.checkForUpdatesAndNotify();
 });
 
 // Quit when all windows are closed.
@@ -62,19 +60,66 @@ app.on('activate', function () {
   }
 });
 
-let info = {};
+let info = {
+    url: "",
+    size: 0,
+    statusCode: "",
+    startDate: "",
+    doneDate: "",
+    elapsedBytes: 0,
+    elapsedSeconds: 0,
+    bytesPerSecond: 0,
+    percent: 0,
+    headers: ""
+};
 
-ipcMain.on('curlDownload', (event, url) => {
+
+exports.getInfo = () => {
+    return info;
+};
+
+exports.download = (url) => {
+    info.startDate = new Date();
+    info.url = url;
+
+    request.head(url).on('response', function(response) {
+        info.statusCode = response.statusCode;
+
+        let headers = response.headers;
+        for (const k in headers){
+            info.headers = info.headers + `${k}=${headers[k]}\n`;
+        }
+    });
+
+    download(mainWindow, info.url, {
+        onStarted: (dl) => {
+            info.size = dl.getTotalBytes();
+            info.startDate = new Date();
+        },
+        onProgress: (progress) => {
+            info.percent = progress;
+            info.elapsedSeconds = Math.floor((new Date().getTime() - info.startDate.getTime()) / 1000);
+            info.elapsedBytes = Math.floor(info.size * info.percent);
+
+            if (info.elapsedSeconds > 0) {
+                info.bytesPerSecond = Math.floor(info.elapsedBytes / info.elapsedSeconds);
+            }
+        }
+    }).then(dl => {
+        info.doneDate = new Date();
+    })
+        .catch(console.error);
+};
+
+exports.curlDownload = (url) => {
   info.startDate = new Date();
   info.url = url;
-  info.elapsedBytes = 0;
-  info.headers = "";
 
   const curl = new Curl();
   curl.setOpt('URL', url);
 
   curl.setOpt('FOLLOWLOCATION', 1);
-  curl.setOpt('VERBOSE', 1);
+  //curl.setOpt('VERBOSE', 1);
 
   if (fs.existsSync( "cacert.pem")) {
     curl.setOpt(Curl.option.CAINFO, "cacert.pem");
@@ -90,8 +135,6 @@ ipcMain.on('curlDownload', (event, url) => {
 
   curl.setOpt('SSL_VERIFYHOST', 2); //This is not a boolean field! 0 -> Disabled, 2 -> Enabled
   curl.setOpt('SSL_VERIFYPEER', 1);
-  //curl.setOpt('SSL_VERIFYHOST', 0);
-  //curl.setOpt('SSL_VERIFYPEER', 0);
 
   curl.setOpt(Curl.option.NOPROGRESS, false);
 
@@ -117,104 +160,42 @@ ipcMain.on('curlDownload', (event, url) => {
       info.bytesPerSecond = Math.floor(info.elapsedBytes / info.elapsedSeconds);
     }
 
-    mainWindow.webContents.send('update', info);
-
-    //console.log("dltotal:" + dltotal);
-    //console.log("dlnow:" + dlnow);
     return 0;
   });
 
   // This is the same than the data event, however,
 // keep in mind that here the return value is considered.
   curl.setOpt(Curl.option.WRITEFUNCTION, function(chunk) {
-    //fs.appendFileSync(outputFile, chunk);
-
-    //console.log("write:" + chunk.length);
-    mainWindow.webContents.send('update', info);
-
     return chunk.length;
   });
 
   curl.on('header', function(chunk) {
     var textChunk = chunk.toString('utf8');
     info.headers = info.headers + textChunk;
-    mainWindow.webContents.send('update', info);
   });
 
   curl.on('end', function() {
     info.doneDate = new Date();
-    mainWindow.webContents.send('update', info);
 
     //console.log('Download ended');
     curl.close();
   });
 
   curl.on('error', function(err) {
-    //console.log('Failed to download file', err);
-    curl.close();
+      console.error(err);
+      curl.close();
   });
 
   curl.perform();
-});
+};
 
-ipcMain.on('download', (event, url) => {
-  info.startDate = new Date();
-  info.url = url;
-
-  request.head(url).on('response', function(response) {
-    info.statusCode = response.statusCode;
-    info.headers = "";
-
-    let headers = response.headers;
-    for (const k in headers){
-      info.headers = info.headers + `${k}=${headers[k]}\n`;
-    }
-  });
-
-  mainWindow.webContents.send('update', info);
-
-  download(mainWindow, info.url, {
-    onStarted: (dl) => {
-      info.size = dl.getTotalBytes();
-      info.startDate = new Date();
-      mainWindow.webContents.send('update', info);
-    },
-    onProgress: (progress) => { 
-      info.percent = progress;
-      info.elapsedSeconds = Math.floor((new Date().getTime() - info.startDate.getTime()) / 1000);
-      info.elapsedBytes = Math.floor(info.size * info.percent);
-
-      if (info.elapsedSeconds > 0) {
-        info.bytesPerSecond = Math.floor(info.elapsedBytes / info.elapsedSeconds);
-      }
-
-      if (mainWindow && mainWindow.webContents) 
-        mainWindow.webContents.send('update', info);
-
-      //console.log("download update: " + JSON.stringify(info))
-    }
-  }).then(dl => {
-      info.doneDate = new Date();
-      //console.log("download done: " + JSON.stringify(info))
-      if (mainWindow && mainWindow.webContents) 
-        mainWindow.webContents.send('update', info);
-    })
-    .catch(console.error);
-});
-
-ipcMain.on('electronDownload', (event, url) => {
+exports.electronDownload = (url) => {
     info.startDate = new Date();
     info.url = url;
-    info.elapsedBytes = 0;
-    mainWindow.webContents.send('update', info);
 
     const request = net.request(url)
     request.on('response', (response) => {
-        //console.log(`STATUS: ${response.statusCode}`)
-        //console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
         info.statusCode = response.statusCode;
-
-        info.headers = "";
 
         let headers = response.headers;
         for (const k in headers){
@@ -222,8 +203,6 @@ ipcMain.on('electronDownload', (event, url) => {
                 info.size = headers[k];
             info.headers = info.headers + `${k}=${headers[k]}\n`;
         }
-
-        mainWindow.webContents.send('update', info);
 
         response.on('data', (chunk) => {
             info.elapsedBytes = info.elapsedBytes + chunk.length;
@@ -236,15 +215,11 @@ ipcMain.on('electronDownload', (event, url) => {
                 info.bytesPerSecond = Math.floor(info.elapsedBytes / info.elapsedSeconds);
             }
 
-            mainWindow.webContents.send('update', info);
-
-            //console.log(`BODY: ${chunk.length}`)
         })
         response.on('end', () => {
             //console.log('No more data in response.')
             info.doneDate = new Date();
-            mainWindow.webContents.send('update', info);
         })
     })
     request.end()
-});
+};
