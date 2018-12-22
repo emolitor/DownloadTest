@@ -1,10 +1,10 @@
 {
   "name": "downloadtest",
   "description": "Simple electron application that tests a download URL.",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "main": "main.js",
   "author": "eric@molitor.org",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "repository": "https://github.com/emolitor/DownloadTest",
   "build": {
     "appId": "download.test",
