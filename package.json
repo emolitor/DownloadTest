@@ -1,7 +1,7 @@
 {
   "name": "downloadtest",
   "description": "Simple electron application that tests a download URL.",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "main": "main.js",
   "author": "eric@molitor.org",
   "license": "MIT",
@@ -24,16 +24,16 @@
     "release": "electron-builder --publish always"
   },
   "dependencies": {
-    "electron-dl": "1.12.0",
+    "electron-dl": "1.13.0",
     "electron-log": "2.2.17",
-    "electron-updater": "4.0.6",
+    "electron-updater": "4.0.8",
     "node-libcurl": "1.3.3",
     "request": "2.88.0"
   },
   "devDependencies": {
-    "ajv": "6.6.2",
-    "electron": "4.0.0",
-    "electron-builder": "20.38.4",
-    "rimraf": "2.6.2"
+    "ajv": "6.10.0",
+    "electron": "4.0.8",
+    "electron-builder": "20.39.0",
+    "rimraf": "2.6.3"
   }
 }
